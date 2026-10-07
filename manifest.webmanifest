@@ -1,0 +1,16 @@
+{
+  "name":"KIR APP - Kartu Inventaris Ruangan",
+  "short_name":"KIR APP",
+  "description":"Aplikasi Kartu Inventaris Ruangan",
+  "lang":"id-ID",
+  "start_url":"./",
+  "scope":"./",
+  "display":"standalone",
+  "orientation":"any",
+  "background_color":"#f5f7fb",
+  "theme_color":"#1f4e78",
+  "icons":[
+    {"src":"./icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"./icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
+}
