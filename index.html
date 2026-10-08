@@ -25,9 +25,11 @@
     .loading b{display:block;margin-top:12px;color:var(--blue);font-size:15px}
     .loading span{display:block;margin-top:3px;color:var(--muted);font-size:11px}
     @keyframes spin{to{transform:rotate(360deg)}}
-    /* Tombol install kecil, hanya muncul di browser (bukan saat sudah diinstall) */
-    .install{position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:10;border:0;border-radius:999px;padding:10px 16px;background:var(--blue);color:#fff;font-weight:800;font-size:12px;box-shadow:0 6px 20px rgba(15,42,68,.3);display:none}
-    .install.show{display:block}
+    /* Tombol install: kecil, di kiri bawah, bisa ditutup, hanya di browser (bukan saat sudah diinstall) */
+    .install-wrap{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:10;display:none;align-items:center;background:var(--blue);border-radius:999px;box-shadow:0 6px 20px rgba(15,42,68,.3);overflow:hidden}
+    .install-wrap.show{display:flex}
+    .install-wrap button{border:0;background:transparent;color:#fff;font-weight:800;font-size:12px;padding:10px 12px;cursor:pointer}
+    .install-wrap .x{padding:10px 12px 10px 4px;opacity:.8}
     .ios-note{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:20;background:#fff;border:1px solid #dce5ef;border-radius:14px;padding:14px 15px;box-shadow:0 15px 45px rgba(15,42,68,.2);display:none;color:var(--text);font-size:13px;line-height:1.45}
     .ios-note.show{display:block}.ios-note b{color:var(--blue)}
     .ios-note button{float:right;border:0;background:#eef3f8;color:var(--blue);border-radius:8px;padding:5px 8px;font-weight:700}
@@ -38,24 +40,28 @@
   <iframe id="appFrame" class="frame" title="KIR APP" allow="camera; microphone; geolocation" referrerpolicy="strict-origin-when-cross-origin" src="https://script.google.com/macros/s/AKfycbyUeQ2HqZ7qg4klCgnye4wEB2VRAxKXsSguKTDilzp9cAAG-ylowjBCo8k4zaPgo5hr/exec"></iframe>
 </div>
 <div id="loading" class="loading"><div class="loader-card"><div class="spinner"></div><b>Membuka KIR APP</b><span>Mohon tunggu sebentar...</span></div></div>
-<button id="installBtn" class="install" type="button">Install</button>
+<div id="installWrap" class="install-wrap"><button id="installBtn" type="button">Install</button><button class="x" type="button" aria-label="Tutup" onclick="dismissInstall()">✕</button></div>
 <div id="iosNote" class="ios-note"><button onclick="closeIosNote()">Tutup</button><b>Install di iPhone/iPad</b><br>Ketuk <b>Bagikan</b> di Safari → <b>Tambah ke Layar Utama</b> → <b>Tambah</b>.</div>
 <script>
-  const frame=document.getElementById('appFrame'),loading=document.getElementById('loading'),installBtn=document.getElementById('installBtn');
+  const frame=document.getElementById('appFrame'),loading=document.getElementById('loading'),installBtn=document.getElementById('installBtn'),installWrap=document.getElementById('installWrap');
   let deferredPrompt=null;
   const standalone=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
   const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.MSStream;
+  const dismissed=()=>{try{return localStorage.getItem('kirInstallDismissed')==='1'}catch(e){return false}};
+  function showInstall(){if(!standalone()&&!dismissed())installWrap.classList.add('show')}
+  function hideInstall(){installWrap.classList.remove('show')}
+  function dismissInstall(){hideInstall();try{localStorage.setItem('kirInstallDismissed','1')}catch(e){}}
   frame.addEventListener('load',()=>setTimeout(()=>loading.classList.add('hide'),120));
   setTimeout(()=>loading.classList.add('hide'),8000);
-  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;if(!standalone())installBtn.classList.add('show')});
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;showInstall()});
   installBtn.addEventListener('click',async()=>{
-    if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;installBtn.classList.remove('show');return}
+    if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;hideInstall();return}
     showIosNote();
   });
-  window.addEventListener('appinstalled',()=>{installBtn.classList.remove('show');deferredPrompt=null});
+  window.addEventListener('appinstalled',()=>{hideInstall();deferredPrompt=null});
   function showIosNote(){if(isIOS()&&!standalone())document.getElementById('iosNote').classList.add('show')}
   function closeIosNote(){document.getElementById('iosNote').classList.remove('show')}
-  if(isIOS()&&!standalone())installBtn.classList.add('show');
+  if(isIOS())showInstall();
   if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
 </body>
